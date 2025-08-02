@@ -20,6 +20,70 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# --- Categorization Functions ---
+def categorize_rainfall(mm):
+    """Categorizes rainfall into 'Low', 'Medium', or 'High'."""
+    if mm < 50:
+        return 'Low'
+    elif mm < 150:
+        return 'Medium'
+    else:
+        return 'High'
+
+def categorize_windspeed(ms):
+    """Categorizes wind speed into 'Calm', 'Moderate', or 'Windy'."""
+    if ms < 1.5:
+        return 'Calm'
+    elif ms < 3.5:
+        return 'Moderate'
+    else:
+        return 'Windy'
+
+def categorize_max_temp(temp):
+    """Categorizes maximum temperature into 'Cool', 'Warm', or 'Hot'."""
+    if temp < 28:
+        return 'Cool'
+    elif temp < 32:
+        return 'Warm'
+    else:
+        return 'Hot'
+
+def categorize_min_temp(temp):
+    """Categorizes minimum temperature into 'Cold', 'Cool', or 'Warm'."""
+    if temp < 15:
+        return 'Cold'
+    elif temp < 22:
+        return 'Cool'
+    else:
+        return 'Warm'
+
+def categorize_humidity(humidity):
+    """Categorizes humidity into 'Low', 'Medium', or 'High'."""
+    if humidity < 60:
+        return 'Low'
+    elif humidity < 80:
+        return 'Medium'
+    else:
+        return 'High'
+
+def categorize_sunshine(hours):
+    """Categorizes sunshine hours into 'Low', 'Medium', or 'High'."""
+    if hours < 4:
+        return 'Low'
+    elif hours < 7:
+        return 'Medium'
+    else:
+        return 'High'
+
+def categorize_cloud_coverage(coverage):
+    """Categorizes cloud coverage into 'Clear', 'Partly Cloudy', or 'Cloudy'."""
+    if coverage < 2:
+        return 'Clear'
+    elif coverage < 5:
+        return 'Partly Cloudy'
+    else:
+        return 'Cloudy'
+
 # --- Functions for data loading and merging ---
 @st.cache_data
 def load_weather_data(uploaded_file, value_column_name):
@@ -92,7 +156,17 @@ if page == "1. Data Input":
             # Filter for the year range 1961-2023
             if not merged_df.empty:
                 st.session_state.weather_df = merged_df[(merged_df['Year'] >= 1961) & (merged_df['Year'] <= 2023)].copy()
-                st.write("Merged and filtered DataFrame:")
+                
+                # Apply categorization functions to create new categorical columns
+                st.session_state.weather_df['Categorized_Rainfall'] = st.session_state.weather_df['Rainfall'].apply(categorize_rainfall)
+                st.session_state.weather_df['Categorized_WindSpeed'] = st.session_state.weather_df['WindSpeed'].apply(categorize_windspeed)
+                st.session_state.weather_df['Categorized_MaxTemp'] = st.session_state.weather_df['MaxTemp'].apply(categorize_max_temp)
+                st.session_state.weather_df['Categorized_MinTemp'] = st.session_state.weather_df['MinTemp'].apply(categorize_min_temp)
+                st.session_state.weather_df['Categorized_Humidity'] = st.session_state.weather_df['Humidity'].apply(categorize_humidity)
+                st.session_state.weather_df['Categorized_Sunshine'] = st.session_state.weather_df['Sunshine'].apply(categorize_sunshine)
+                st.session_state.weather_df['Categorized_CloudCoverage'] = st.session_state.weather_df['CloudCoverage'].apply(categorize_cloud_coverage)
+                
+                st.write("Merged, filtered, and categorized DataFrame:")
                 st.dataframe(st.session_state.weather_df.head())
             else:
                 st.error("Could not merge data. Please check the uploaded files.")
@@ -103,7 +177,7 @@ elif page == "2. Data Visualization":
     if st.session_state.weather_df.empty:
         st.warning("Please upload and process the data on the 'Data Input' page first.")
     else:
-        st.write("Visualize the seven weather parameters over a selected year range.")
+        st.write("Visualize the categorical weather parameters over a selected year range.")
         
         # Get min and max years from the dataframe
         min_year = int(st.session_state.weather_df['Year'].min())
@@ -119,16 +193,28 @@ elif page == "2. Data Visualization":
         
         filtered_df = st.session_state.weather_df[(st.session_state.weather_df['Year'] >= year_range[0]) & (st.session_state.weather_df['Year'] <= year_range[1])]
 
-        parameters = ['MaxTemp', 'MinTemp', 'Rainfall', 'CloudCoverage', 'Humidity', 'Sunshine', 'WindSpeed']
+        parameters = {
+            'Categorized_MaxTemp': ['Cool', 'Warm', 'Hot'],
+            'Categorized_MinTemp': ['Cold', 'Cool', 'Warm'],
+            'Categorized_Rainfall': ['Low', 'Medium', 'High'],
+            'Categorized_CloudCoverage': ['Clear', 'Partly Cloudy', 'Cloudy'],
+            'Categorized_Humidity': ['Low', 'Medium', 'High'],
+            'Categorized_Sunshine': ['Low', 'Medium', 'High'],
+            'Categorized_WindSpeed': ['Calm', 'Moderate', 'Windy']
+        }
 
-        for param in parameters:
-            st.subheader(f"Monthly Average {param}")
+        for param, categories in parameters.items():
+            st.subheader(f"Categorical Trends for {param.replace('Categorized_', '')}")
+            
+            # Count the occurrences of each category per year
+            plot_df = filtered_df.groupby(['Year', param]).size().reset_index(name='Count')
+
             fig, ax = plt.subplots(figsize=(10, 5))
-            # Use a bar plot instead of a line plot
-            sns.barplot(data=filtered_df, x='Year', y=param, hue='Month', palette='viridis', ax=ax)
-            ax.set_title(f'{param} Trends ({year_range[0]} - {year_range[1]})')
+            # Use a bar plot to show category counts per year
+            sns.barplot(data=plot_df, x='Year', y='Count', hue=param, palette='viridis', ax=ax, order=range(year_range[0], year_range[1] + 1))
+            ax.set_title(f'Category Distribution for {param.replace("Categorized_", "")} ({year_range[0]} - {year_range[1]})')
             ax.set_xlabel("Year")
-            ax.set_ylabel(param)
+            ax.set_ylabel("Count of Months")
             plt.xticks(rotation=90, ha='right')  # Rotate x-axis labels for readability
             plt.tight_layout() # Adjust plot to ensure everything fits
             st.pyplot(fig)
