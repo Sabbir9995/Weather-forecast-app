@@ -125,10 +125,12 @@ page = st.sidebar.radio("Go to", ["1. Data Input", "2. Data Visualization", "3. 
 # --- Page 1: Data Input ---
 if page == "1. Data Input":
     st.header("1. Data Input")
-    st.write("Upload the seven Excel files for weather data. Once all files are uploaded, the data will be processed and merged.")
+    st.write("Upload the seven Excel files for weather data. Once all files are uploaded, the data will be processed and merged automatically.")
 
     if 'weather_df' not in st.session_state:
         st.session_state.weather_df = pd.DataFrame()
+    if 'data_processed' not in st.session_state:
+        st.session_state.data_processed = False
     
     # Create file uploaders for each parameter
     uploaded_files = {}
@@ -140,39 +142,45 @@ if page == "1. Data Input":
     uploaded_files['CloudCoverage'] = st.file_uploader("Upload Cloud Coverage.xlsx", type="xlsx")
     uploaded_files['WindSpeed'] = st.file_uploader("Upload Wind Speed.xlsx", type="xlsx")
 
-    # Check if all files are uploaded
+    # Check if all files are uploaded and data has not been processed yet
     all_files_uploaded = all(file is not None for file in uploaded_files.values())
 
-    if all_files_uploaded:
-        st.success("All files uploaded successfully! Click the button below to process the data.")
-        if st.button("Process and Merge Data"):
-            # Load and clean each dataframe
-            dfs_to_merge = []
-            for name, file in uploaded_files.items():
-                df = load_weather_data(file, name)
-                if df is not None:
-                    dfs_to_merge.append(df)
+    if all_files_uploaded and not st.session_state.data_processed:
+        st.success("All files uploaded successfully! Processing data automatically...")
+        
+        # Load and clean each dataframe
+        dfs_to_merge = []
+        for name, file in uploaded_files.items():
+            df = load_weather_data(file, name)
+            if df is not None:
+                dfs_to_merge.append(df)
+        
+        # Merge all dataframes
+        merged_df = merge_dataframes(dfs_to_merge)
+        
+        # Filter for the year range 1961-2023
+        if not merged_df.empty:
+            st.session_state.weather_df = merged_df[(merged_df['Year'] >= 1961) & (merged_df['Year'] <= 2023)].copy()
             
-            # Merge all dataframes
-            merged_df = merge_dataframes(dfs_to_merge)
+            # Apply categorization functions to create new categorical columns
+            st.session_state.weather_df['Categorized_Rainfall'] = st.session_state.weather_df['Rainfall'].apply(categorize_rainfall)
+            st.session_state.weather_df['Categorized_WindSpeed'] = st.session_state.weather_df['WindSpeed'].apply(categorize_windspeed)
+            st.session_state.weather_df['Categorized_MaxTemp'] = st.session_state.weather_df['MaxTemp'].apply(categorize_max_temp)
+            st.session_state.weather_df['Categorized_MinTemp'] = st.session_state.weather_df['MinTemp'].apply(categorize_min_temp)
+            st.session_state.weather_df['Categorized_Humidity'] = st.session_state.weather_df['Humidity'].apply(categorize_humidity)
+            st.session_state.weather_df['Categorized_Sunshine'] = st.session_state.weather_df['Sunshine'].apply(categorize_sunshine)
+            st.session_state.weather_df['Categorized_CloudCoverage'] = st.session_state.weather_df['CloudCoverage'].apply(categorize_cloud_coverage)
             
-            # Filter for the year range 1961-2023
-            if not merged_df.empty:
-                st.session_state.weather_df = merged_df[(merged_df['Year'] >= 1961) & (merged_df['Year'] <= 2023)].copy()
-                
-                # Apply categorization functions to create new categorical columns
-                st.session_state.weather_df['Categorized_Rainfall'] = st.session_state.weather_df['Rainfall'].apply(categorize_rainfall)
-                st.session_state.weather_df['Categorized_WindSpeed'] = st.session_state.weather_df['WindSpeed'].apply(categorize_windspeed)
-                st.session_state.weather_df['Categorized_MaxTemp'] = st.session_state.weather_df['MaxTemp'].apply(categorize_max_temp)
-                st.session_state.weather_df['Categorized_MinTemp'] = st.session_state.weather_df['MinTemp'].apply(categorize_min_temp)
-                st.session_state.weather_df['Categorized_Humidity'] = st.session_state.weather_df['Humidity'].apply(categorize_humidity)
-                st.session_state.weather_df['Categorized_Sunshine'] = st.session_state.weather_df['Sunshine'].apply(categorize_sunshine)
-                st.session_state.weather_df['Categorized_CloudCoverage'] = st.session_state.weather_df['CloudCoverage'].apply(categorize_cloud_coverage)
-                
-                st.write("Merged, filtered, and categorized DataFrame:")
-                st.dataframe(st.session_state.weather_df.head())
-            else:
-                st.error("Could not merge data. Please check the uploaded files.")
+            st.session_state.data_processed = True
+            st.write("Merged, filtered, and categorized DataFrame:")
+            st.dataframe(st.session_state.weather_df.head())
+        else:
+            st.error("Could not merge data. Please check the uploaded files.")
+    
+    # If data is already processed, just show a message
+    if st.session_state.data_processed:
+        st.success("Data has been processed. You can now navigate to other pages.")
+
 
 # --- Page 2: Data Visualization ---
 elif page == "2. Data Visualization":
