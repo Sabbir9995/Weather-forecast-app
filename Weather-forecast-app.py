@@ -334,8 +334,8 @@ elif page == "4. Report Generation":
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
-            styles.add(ParagraphStyle(name='CenteredTitle', alignment=TA_CENTER, fontSize=24, spaceAfter=20))
-            styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=18, spaceAfter=12))
+            styles.add(ParagraphStyle(name='CenteredTitle', alignment=TA_CENTER, fontSize=40, spaceAfter=20))
+            styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=30, spaceAfter=16))
             
             story = []
             
@@ -344,10 +344,10 @@ elif page == "4. Report Generation":
 
             story.append(Paragraph(f"**Year:** {prediction_data['input']['Year']}", styles['Normal']))
             story.append(Paragraph(f"**Month:** {prediction_data['input']['Month']}", styles['Normal']))
-            story.append(Spacer(4, 2 * inch))
+            story.append(Spacer(2, 1 * inch))
 
             story.append(Paragraph("--- Predicted Weather Data ---", styles['Heading']))
-            story.append(Spacer(4, 2 * inch))
+            story.append(Spacer(2, 1 * inch))
 
             for param, value in prediction_data['results'].items():
                 story.append(Paragraph(f"**{param}:** {value:.2f}", styles['Normal']))
