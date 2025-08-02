@@ -350,7 +350,7 @@ elif page == "4. Report Generation":
             story.append(Spacer(1, 0.1 * inch))
 
             for param, value in prediction_data['results'].items():
-                story.append(Paragraph(f"**{param}:** {value:.2f}", styles['Normal']))
+                story.append(Paragraph(f"**{param}:** {value:.10f}", styles['Normal']))
             
             doc.build(story)
             buffer.seek(0)
