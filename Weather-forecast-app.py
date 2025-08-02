@@ -124,10 +124,13 @@ elif page == "2. Data Visualization":
         for param in parameters:
             st.subheader(f"Monthly Average {param}")
             fig, ax = plt.subplots(figsize=(10, 5))
-            sns.lineplot(data=filtered_df, x='Year', y=param, hue='Month', palette='viridis', ax=ax)
+            # Use a bar plot instead of a line plot
+            sns.barplot(data=filtered_df, x='Year', y=param, hue='Month', palette='viridis', ax=ax)
             ax.set_title(f'{param} Trends ({year_range[0]} - {year_range[1]})')
             ax.set_xlabel("Year")
             ax.set_ylabel(param)
+            plt.xticks(rotation=90, ha='right')  # Rotate x-axis labels for readability
+            plt.tight_layout() # Adjust plot to ensure everything fits
             st.pyplot(fig)
 
 # --- Page 3: Predict Weather ---
