@@ -216,25 +216,40 @@ elif page == "2. Data Visualization":
             'Categorized_WindSpeed': ['Calm', 'Moderate', 'Windy']
         }
 
-        for param, categories in parameters_to_plot.items():
-            st.subheader(f"Distribution of {param.replace('Categorized_', '')}")
-            
-            if visualization_type == "Total Distribution":
-                # Total count for each category
-                category_counts = st.session_state.weather_df[param].value_counts().reindex(categories)
-                plot_df = category_counts.reset_index()
-                plot_df.columns = [param, 'Count']
+        if visualization_type == "Total Distribution":
+            start_year, end_year = st.slider(
+                "Select Year Range:",
+                min_value=1961,
+                max_value=2023,
+                value=(1961, 2023)
+            )
 
-                fig, ax = plt.subplots(figsize=(8, 5))
-                sns.barplot(data=plot_df, x=param, y='Count', palette='viridis', ax=ax, order=categories)
-                ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")} (1961-2023)')
-                ax.set_xlabel(param.replace("Categorized_", ""))
-                ax.set_ylabel("Total Count of Months")
-                plt.xticks(rotation=45, ha='right')
-                plt.tight_layout()
-                st.pyplot(fig)
-            
-            elif visualization_type == "Yearly Trend":
+            filtered_df = st.session_state.weather_df[(st.session_state.weather_df['Year'] >= start_year) & (st.session_state.weather_df['Year'] <= end_year)]
+
+            for param, categories in parameters_to_plot.items():
+                st.subheader(f"Distribution of {param.replace('Categorized_', '')} ({start_year} - {end_year})")
+                
+                if not filtered_df.empty:
+                    # Total count for each category in the filtered data
+                    category_counts = filtered_df[param].value_counts().reindex(categories)
+                    plot_df = category_counts.reset_index()
+                    plot_df.columns = [param, 'Count']
+
+                    fig, ax = plt.subplots(figsize=(8, 5))
+                    sns.barplot(data=plot_df, x=param, y='Count', palette='viridis', ax=ax, order=categories)
+                    ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")}')
+                    ax.set_xlabel(param.replace("Categorized_", ""))
+                    ax.set_ylabel("Total Count of Months")
+                    plt.xticks(rotation=45, ha='right')
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                else:
+                    st.warning(f"No data available for {param.replace('Categorized_', '')} in the selected year range.")
+
+        elif visualization_type == "Yearly Trend":
+            for param, categories in parameters_to_plot.items():
+                st.subheader(f"Distribution of {param.replace('Categorized_', '')}")
+                
                 # Count the occurrences of each category per year
                 plot_df = st.session_state.weather_df.groupby(['Year', param]).size().reset_index(name='Count')
                 
