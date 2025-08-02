@@ -245,8 +245,8 @@ elif page == "3. Predict Weather":
             st.success("Models trained successfully!")
 
         # User input for prediction
-        year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2100, value=2024, step=1)
-        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 13)))
+        year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2023, value=1961, step=1)
+        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 12)))
         
         if st.button("Predict"):
             if 'models' in st.session_state:
@@ -290,7 +290,7 @@ elif page == "4. Report Generation":
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
             styles.add(ParagraphStyle(name='CenteredTitle', alignment=TA_CENTER, fontSize=24, spaceAfter=20))
-            styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=18, spaceAfter=12))
+            styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=30, spaceAfter=20))
             
             story = []
             
