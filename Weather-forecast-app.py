@@ -127,30 +127,35 @@ if page == "1. Data Input":
     st.header("1. Data Input")
     st.write("Upload the seven Excel files for weather data. Once all files are uploaded, the data will be processed and merged automatically.")
 
-    if 'weather_df' not in st.session_state:
-        st.session_state.weather_df = pd.DataFrame()
+    # Initialize session state for files and processing status
+    if 'uploaded_files' not in st.session_state:
+        st.session_state.uploaded_files = {}
     if 'data_processed' not in st.session_state:
         st.session_state.data_processed = False
     
     # Create file uploaders for each parameter
-    uploaded_files = {}
-    uploaded_files['Humidity'] = st.file_uploader("Upload Humidity.xlsx", type="xlsx")
-    uploaded_files['MaxTemp'] = st.file_uploader("Upload Maximum Temperature.xlsx", type="xlsx")
-    uploaded_files['MinTemp'] = st.file_uploader("Upload Minimum Temperature.xlsx", type="xlsx")
-    uploaded_files['Rainfall'] = st.file_uploader("Upload Rainfall.xlsx", type="xlsx")
-    uploaded_files['Sunshine'] = st.file_uploader("Upload Sunshine.xlsx", type="xlsx")
-    uploaded_files['CloudCoverage'] = st.file_uploader("Upload Cloud Coverage.xlsx", type="xlsx")
-    uploaded_files['WindSpeed'] = st.file_uploader("Upload Wind Speed.xlsx", type="xlsx")
+    uploaded_files_current = {}
+    uploaded_files_current['Humidity'] = st.file_uploader("Upload Humidity.xlsx", type="xlsx")
+    uploaded_files_current['MaxTemp'] = st.file_uploader("Upload Maximum Temperature.xlsx", type="xlsx")
+    uploaded_files_current['MinTemp'] = st.file_uploader("Upload Minimum Temperature.xlsx", type="xlsx")
+    uploaded_files_current['Rainfall'] = st.file_uploader("Upload Rainfall.xlsx", type="xlsx")
+    uploaded_files_current['Sunshine'] = st.file_uploader("Upload Sunshine.xlsx", type="xlsx")
+    uploaded_files_current['CloudCoverage'] = st.file_uploader("Upload Cloud Coverage.xlsx", type="xlsx")
+    uploaded_files_current['WindSpeed'] = st.file_uploader("Upload Wind Speed.xlsx", type="xlsx")
 
-    # Check if all files are uploaded and data has not been processed yet
-    all_files_uploaded = all(file is not None for file in uploaded_files.values())
-
-    if all_files_uploaded and not st.session_state.data_processed:
+    # Check if all files are uploaded and if the file list has changed
+    all_files_uploaded = all(file is not None for file in uploaded_files_current.values())
+    current_file_names = {name: file.name if file else None for name, file in uploaded_files_current.items()}
+    
+    if all_files_uploaded and current_file_names != st.session_state.uploaded_files:
         st.success("All files uploaded successfully! Processing data automatically...")
+        
+        # Update the session state with the current file list
+        st.session_state.uploaded_files = current_file_names
         
         # Load and clean each dataframe
         dfs_to_merge = []
-        for name, file in uploaded_files.items():
+        for name, file in uploaded_files_current.items():
             df = load_weather_data(file, name)
             if df is not None:
                 dfs_to_merge.append(df)
@@ -176,8 +181,13 @@ if page == "1. Data Input":
             st.dataframe(st.session_state.weather_df.head())
         else:
             st.error("Could not merge data. Please check the uploaded files.")
+            st.session_state.data_processed = False
+    elif not all_files_uploaded:
+        st.session_state.data_processed = False
+        st.session_state.uploaded_files = current_file_names
+        if not st.session_state.weather_df.empty:
+             st.write("Data is loaded and processed. You can now navigate to other pages.")
     
-    # If data is already processed, just show a message
     if st.session_state.data_processed:
         st.success("Data has been processed. You can now navigate to other pages.")
 
@@ -190,6 +200,11 @@ elif page == "2. Data Visualization":
     else:
         st.write("Categorical distribution of weather parameters from 1961 to 2023.")
         
+        visualization_type = st.radio(
+            "Select visualization type:",
+            ("Total Distribution", "Yearly Trend")
+        )
+
         # Define parameters and their corresponding categories
         parameters_to_plot = {
             'Categorized_MaxTemp': ['Cool', 'Warm', 'Hot'],
@@ -202,22 +217,36 @@ elif page == "2. Data Visualization":
         }
 
         for param, categories in parameters_to_plot.items():
-            st.subheader(f"Distribution of {param.replace('Categorized_', '')} (1961 - 2023)")
+            st.subheader(f"Distribution of {param.replace('Categorized_', '')}")
             
-            # Count the occurrences of each category in the entire DataFrame
-            category_counts = st.session_state.weather_df[param].value_counts().reindex(categories)
-            plot_df = category_counts.reset_index()
-            plot_df.columns = [param, 'Count']
+            if visualization_type == "Total Distribution":
+                # Total count for each category
+                category_counts = st.session_state.weather_df[param].value_counts().reindex(categories)
+                plot_df = category_counts.reset_index()
+                plot_df.columns = [param, 'Count']
 
-            fig, ax = plt.subplots(figsize=(8, 5))
-            # Use a bar plot to show the total count of each category
-            sns.barplot(data=plot_df, x=param, y='Count', palette='viridis', ax=ax, order=categories)
-            ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")}')
-            ax.set_xlabel(param.replace("Categorized_", ""))
-            ax.set_ylabel("Total Count of Months (1961-2023)")
-            plt.xticks(rotation=45, ha='right')
-            plt.tight_layout()
-            st.pyplot(fig)
+                fig, ax = plt.subplots(figsize=(8, 5))
+                sns.barplot(data=plot_df, x=param, y='Count', palette='viridis', ax=ax, order=categories)
+                ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")} (1961-2023)')
+                ax.set_xlabel(param.replace("Categorized_", ""))
+                ax.set_ylabel("Total Count of Months")
+                plt.xticks(rotation=45, ha='right')
+                plt.tight_layout()
+                st.pyplot(fig)
+            
+            elif visualization_type == "Yearly Trend":
+                # Count the occurrences of each category per year
+                plot_df = st.session_state.weather_df.groupby(['Year', param]).size().reset_index(name='Count')
+                
+                fig, ax = plt.subplots(figsize=(12, 6))
+                sns.barplot(data=plot_df, x='Year', y='Count', hue=param, palette='viridis', ax=ax, order=range(1961, 2024))
+                ax.set_title(f'Category Distribution per Year for {param.replace("Categorized_", "")} (1961 - 2023)')
+                ax.set_xlabel("Year")
+                ax.set_ylabel("Count of Months")
+                plt.xticks(rotation=90, ha='right', fontsize=8)
+                plt.tight_layout()
+                st.pyplot(fig)
+
 
 # --- Page 3: Predict Weather ---
 elif page == "3. Predict Weather":
