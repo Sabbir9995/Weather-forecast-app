@@ -334,7 +334,7 @@ elif page == "4. Report Generation":
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
-            styles.add(ParagraphStyle(name='CenteredTitle', alignment=TA_CENTER, fontSize=40, spaceAfter=20))
+            styles.add(ParagraphStyle(name='CenteredTitle', alignment=TA_CENTER, fontSize=30, spaceAfter=20))
             styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=30, spaceAfter=16))
             
             story = []
