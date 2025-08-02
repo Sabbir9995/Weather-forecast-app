@@ -291,7 +291,7 @@ elif page == "3. Predict Weather":
 
         # User input for prediction
         year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2023, value=1961, step=1)
-        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 12)))
+        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 13)))
         
         if st.button("Predict"):
             if 'models' in st.session_state:
