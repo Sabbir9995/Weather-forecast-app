@@ -20,6 +20,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# --- Main App Title ---
+st.title("Weather Forecasting App")
+
 # --- Categorization Functions ---
 def categorize_rainfall(mm):
     """Categorizes rainfall into 'Low', 'Medium', or 'High'."""
@@ -121,7 +124,7 @@ page = st.sidebar.radio("Go to", ["1. Data Input", "2. Data Visualization", "3. 
 
 # --- Page 1: Data Input ---
 if page == "1. Data Input":
-    st.title("1. Data Input")
+    st.header("1. Data Input")
     st.write("Upload the seven Excel files for weather data. Once all files are uploaded, the data will be processed and merged.")
 
     if 'weather_df' not in st.session_state:
@@ -173,27 +176,14 @@ if page == "1. Data Input":
 
 # --- Page 2: Data Visualization ---
 elif page == "2. Data Visualization":
-    st.title("2. Data Visualization")
+    st.header("2. Data Visualization")
     if st.session_state.weather_df.empty:
         st.warning("Please upload and process the data on the 'Data Input' page first.")
     else:
-        st.write("Visualize the categorical weather parameters over a selected year range.")
+        st.write("Categorical distribution of weather parameters from 1961 to 2023.")
         
-        # Get min and max years from the dataframe
-        min_year = int(st.session_state.weather_df['Year'].min())
-        max_year = int(st.session_state.weather_df['Year'].max())
-
-        # Year slider for visualization
-        year_range = st.slider(
-            "Select a year range:",
-            min_value=min_year,
-            max_value=max_year,
-            value=(min_year, max_year)
-        )
-        
-        filtered_df = st.session_state.weather_df[(st.session_state.weather_df['Year'] >= year_range[0]) & (st.session_state.weather_df['Year'] <= year_range[1])]
-
-        parameters = {
+        # Define parameters and their corresponding categories
+        parameters_to_plot = {
             'Categorized_MaxTemp': ['Cool', 'Warm', 'Hot'],
             'Categorized_MinTemp': ['Cold', 'Cool', 'Warm'],
             'Categorized_Rainfall': ['Low', 'Medium', 'High'],
@@ -203,25 +193,27 @@ elif page == "2. Data Visualization":
             'Categorized_WindSpeed': ['Calm', 'Moderate', 'Windy']
         }
 
-        for param, categories in parameters.items():
-            st.subheader(f"Categorical Trends for {param.replace('Categorized_', '')}")
+        for param, categories in parameters_to_plot.items():
+            st.subheader(f"Distribution of {param.replace('Categorized_', '')} (1961 - 2023)")
             
-            # Count the occurrences of each category per year
-            plot_df = filtered_df.groupby(['Year', param]).size().reset_index(name='Count')
+            # Count the occurrences of each category in the entire DataFrame
+            category_counts = st.session_state.weather_df[param].value_counts().reindex(categories)
+            plot_df = category_counts.reset_index()
+            plot_df.columns = [param, 'Count']
 
-            fig, ax = plt.subplots(figsize=(10, 5))
-            # Use a bar plot to show category counts per year
-            sns.barplot(data=plot_df, x='Year', y='Count', hue=param, palette='viridis', ax=ax, order=range(year_range[0], year_range[1] + 1))
-            ax.set_title(f'Category Distribution for {param.replace("Categorized_", "")} ({year_range[0]} - {year_range[1]})')
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Count of Months")
-            plt.xticks(rotation=90, ha='right')  # Rotate x-axis labels for readability
-            plt.tight_layout() # Adjust plot to ensure everything fits
+            fig, ax = plt.subplots(figsize=(8, 5))
+            # Use a bar plot to show the total count of each category
+            sns.barplot(data=plot_df, x=param, y='Count', palette='viridis', ax=ax, order=categories)
+            ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")}')
+            ax.set_xlabel(param.replace("Categorized_", ""))
+            ax.set_ylabel("Total Count of Months (1961-2023)")
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
             st.pyplot(fig)
 
 # --- Page 3: Predict Weather ---
 elif page == "3. Predict Weather":
-    st.title("3. Predict Weather")
+    st.header("3. Predict Weather")
     if st.session_state.weather_df.empty:
         st.warning("Please upload and process the data on the 'Data Input' page first.")
     else:
@@ -245,8 +237,8 @@ elif page == "3. Predict Weather":
             st.success("Models trained successfully!")
 
         # User input for prediction
-        year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2023, value=1961, step=1)
-        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 12)))
+        year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2100, value=2024, step=1)
+        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 13)))
         
         if st.button("Predict"):
             if 'models' in st.session_state:
@@ -269,7 +261,7 @@ elif page == "3. Predict Weather":
 
 # --- Page 4: Report Generation ---
 elif page == "4. Report Generation":
-    st.title("4. Report Generation")
+    st.header("4. Report Generation")
     
     if 'prediction_results' not in st.session_state:
         st.warning("Please make a prediction on the 'Predict Weather' page first.")
@@ -290,7 +282,7 @@ elif page == "4. Report Generation":
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
             styles.add(ParagraphStyle(name='CenteredTitle', alignment=TA_CENTER, fontSize=24, spaceAfter=20))
-            styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=30, spaceAfter=20))
+            styles.add(ParagraphStyle(name='Heading', alignment=TA_CENTER, fontSize=18, spaceAfter=12))
             
             story = []
             
