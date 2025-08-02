@@ -236,7 +236,7 @@ elif page == "2. Data Visualization":
                     plot_df = category_counts.reset_index()
                     plot_df.columns = [param, 'Count']
 
-                    fig, ax = plt.subplots(figsize=(8, 5))
+                    fig, ax = plt.subplots(figsize=(4, 2.5))
                     sns.barplot(data=plot_df, x=param, y='Count', palette='viridis', ax=ax, order=categories)
                     ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")}')
                     ax.set_xlabel(param.replace("Categorized_", ""))
@@ -255,7 +255,7 @@ elif page == "2. Data Visualization":
                 plot_df = st.session_state.weather_df.groupby(['Year', param]).size().reset_index(name='Count')
                 
                 fig, ax = plt.subplots(figsize=(12, 6))
-                sns.barplot(data=plot_df, x='Year', y='Count', hue=param, palette='viridis', ax=ax, order=range(1961, 2024))
+                sns.barplot(data=plot_df, x='Year', y='Count', hue=param, palette='viridis', ax=ax, order=range(1961, 2023))
                 ax.set_title(f'Category Distribution per Year for {param.replace("Categorized_", "")} (1961 - 2023)')
                 ax.set_xlabel("Year")
                 ax.set_ylabel("Count of Months")
@@ -290,8 +290,8 @@ elif page == "3. Predict Weather":
             st.success("Models trained successfully!")
 
         # User input for prediction
-        year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2100, value=2024, step=1)
-        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 13)))
+        year_input = st.number_input("Enter a year for prediction:", min_value=1961, max_value=2023, value=1961, step=1)
+        month_input = st.selectbox("Select a month for prediction:", options=list(range(1, 12)))
         
         if st.button("Predict"):
             if 'models' in st.session_state:
