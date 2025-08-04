@@ -241,13 +241,21 @@ elif page == "2. Data Visualization":
                     ax.set_title(f'Total Count by Category for {param.replace("Categorized_", "")}')
                     ax.set_xlabel(param.replace("Categorized_", ""))
                     ax.set_ylabel("Total Count of Months")
-                    plt.xticks(rotation=45, ha='right')
+                    plt.xticks(rotation=10, ha='right')
                     plt.tight_layout()
                     st.pyplot(fig)
                 else:
                     st.warning(f"No data available for {param.replace('Categorized_', '')} in the selected year range.")
 
         elif visualization_type == "Yearly Trend":
+            start_year, end_year = st.slider(
+                "Select Year Range:",
+                min_value=1961,
+                max_value=2023,
+                value=(1961, 2023)
+            )
+
+            filtered_df = st.session_state.weather_df[(st.session_state.weather_df['Year'] >= start_year) & (st.session_state.weather_df['Year'] <= end_year)]
             for param, categories in parameters_to_plot.items():
                 st.subheader(f"Distribution of {param.replace('Categorized_', '')}")
                 
@@ -259,7 +267,7 @@ elif page == "2. Data Visualization":
                 ax.set_title(f'Category Distribution per Year for {param.replace("Categorized_", "")} (1961 - 2023)')
                 ax.set_xlabel("Year")
                 ax.set_ylabel("Count of Months")
-                plt.xticks(rotation=90, ha='right', fontsize=8)
+                plt.xticks(rotation=10, ha='right', fontsize=8)
                 plt.tight_layout()
                 st.pyplot(fig)
 
