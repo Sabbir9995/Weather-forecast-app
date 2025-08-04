@@ -323,11 +323,11 @@ elif page == "4. Report Generation":
         
         # Display the prediction results again
         st.subheader("Last Prediction:")
-        st.write(f"**Year:** {st.session_state.prediction_input['Year']}")
-        st.write(f"**Month:** {st.session_state.prediction_input['Month']}")
+        st.write(f"Year: {st.session_state.prediction_input['Year']}")
+        st.write(f"Month: {st.session_state.prediction_input['Month']}")
         
         for param, value in st.session_state.prediction_results.items():
-            st.write(f"**{param}:** {value:.2f}")
+            st.write(f"{param}: {value:.2f}")
 
         # PDF generation function
         def create_pdf(prediction_data):
